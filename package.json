@@ -1,0 +1,48 @@
+{
+  "name": "M-Pesa",
+  "version": "1.0.0",
+  "description": "A TypeScript SDK for integrating M-Pesa mobile payment services into applications, enabling seamless money transfers and transactions.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "tsc"
+  },
+  "keywords": [
+    "m-pesa",
+    "mpesa",
+    "mobile-money",
+    "financial-services",
+    "typescript",
+    "sdk",
+    "payments",
+    "money-transfer",
+    "safaricom",
+    "mobile-finance",
+    "africa",
+    "digital-wallet",
+    "api",
+    "payment-gateway",
+    "mobile-banking",
+    "mobile-payments",
+    "transaction",
+    "finance",
+    "money",
+    "nodejs"
+  ],
+  "author": "John Tad",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0"
+  }
+}
