@@ -23,7 +23,7 @@ export class APIClient {
         );
     }
 
-    private async requestWithRetry<T>(
+    public async requestWithRetry<T>(
         method: 'GET' | 'POST' | 'PUT' | 'DELETE',
         url: string,
         data?: unknown,
@@ -83,24 +83,7 @@ export class APIClient {
 
     private handleError(error: AxiosError): never {
         if (error.response) {
-            const status = error.response.status;
-
-            switch (status) {
-                case 400:
-                    throw new Error('Bad Request: Check your input.');
-                case 401:
-                    throw new Error('Unauthorized: Invalid credentials.');
-                case 404:
-                    throw new Error('Not Found: The requested resource does not exist.');
-                case 500:
-                    throw new Error('Server Error: Try again later.');
-                default:
-                    throw new Error(
-                        `HTTP Error: ${status} - ${error.response.data ? JSON.stringify(error.response.data) : 'Unknown error'}`
-                    );
-            }
-        } else if (error.request) {
-            throw new Error('Network Error: No response from server.');
+            throw error;
         } else {
             throw new Error(`Error: ${error.message}`);
         }
