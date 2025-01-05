@@ -5,6 +5,7 @@ import { AuthResponse, AuthResponseType } from './models/AuthResponse';
 import { StkPushPayloadType, StkPushResponse, StkPushResponseType } from './models/StkPushResponse';
 import { B2CPayloadType, B2CResponse, B2CResponseType } from './models/B2CPaymentResponse';
 import { RegisterUrlPayloadType, RegisterUrlResponse, RegisterUrlResponseType } from './models/C2BUrlResponse';
+import { LogLevel, Logger } from './Logger';
 
 export interface MpesaConfig {
     environment: 'sandbox' | 'production';
@@ -12,7 +13,7 @@ export interface MpesaConfig {
     secretKey: string;
     timeout?: number;
     retries?: number;
-    logLevel?: 'none' | 'error' | 'verbose';
+    logLevel?: LogLevel;
 }
 
 export class MPesa {
@@ -21,9 +22,16 @@ export class MPesa {
     private apiClient: APIClient;
     private accessToken: string | null = null;
     private tokenExpiry: number | null = null;
+    private logger: Logger;
 
     private constructor(config: MpesaConfig) {
         this.config = config;
+
+        const defaultLogLevel = config.environment === 'sandbox' ? LogLevel.Debug : LogLevel.Error;
+        const logLevel = config.logLevel ?? defaultLogLevel;
+        this.logger = new Logger(logLevel);
+
+        this.logger.logInfo('Logger initialized', { environment: config.environment, logLevel });
 
         const baseURL =
             config.environment === 'sandbox'
@@ -35,6 +43,8 @@ export class MPesa {
             timeout: config.timeout,
             retries: config.retries,
         });
+
+        this.logger.logInfo('APIClient initialized', { baseURL, timeout: config.timeout, retries: config.retries })
     }
 
     public static getInstance(config: MpesaConfig): MPesa {
@@ -70,10 +80,10 @@ export class MPesa {
             this.accessToken = authResponse.accessToken;
             this.tokenExpiry = Date.now() + authResponse.expiresIn * 1000;
 
-            if (this.config.logLevel === 'verbose') {
-                console.log('Authentication successful');
-            }
+            this.logger.logInfo('Authentication successful', { tokenExpiry: this.tokenExpiry })
         } catch (error) {
+            this.logger.logError('Authentication failed', { error });
+
             if (error instanceof AxiosError && error.response) {
                 const { resultCode, resultDesc } = error.response.data;
                 throw new AuthenticationError(resultDesc, resultCode);
@@ -87,14 +97,21 @@ export class MPesa {
         endpoint: string,
         data?: unknown
     ): Promise<T> {
+        this.logger.logDebug('Making authorized request', { method, endpoint, data });
         await this.authenticate();
 
         const headers = {
             Authorization: `Bearer ${this.accessToken}`,
         };
 
-        const res = await this.apiClient.requestWithRetry<T>(method, endpoint, data, { headers });
-        return res.data;
+        try {
+            const res = await this.apiClient.requestWithRetry<T>(method, endpoint, data, { headers });
+            this.logger.logInfo('Request successful', { method, endpoint })
+            return res.data;
+        } catch (error) {
+            this.logger.logError('Request failed', { method, endpoint, error });
+            throw error;
+        }
     }
 
     /**
@@ -104,6 +121,7 @@ export class MPesa {
      * @throws StkPushError if the API returns an error response.
      */
     public async stkPush(payload: StkPushPayloadType): Promise<StkPushResponse> {
+        this.logger.logInfo('Initiating STK Push', { payload });
         try {
             const response = await this.makeAuthorizedRequest<StkPushResponseType>(
                 'POST',
@@ -114,18 +132,18 @@ export class MPesa {
             const stkPushResponse = StkPushResponse.fromApiResponse(response);
 
             if (!stkPushResponse.isSuccess()) {
-                throw new StkPushError(
-                    'STK Push request failed',
-                    response
-                );
+                this.logger.logWarning('STK Push request failed', { response });
+                throw new StkPushError('STK Push request failed', response);
             }
 
             return stkPushResponse;
         } catch (error) {
             if (error instanceof StkPushError) {
-                throw error; // Re-throw STK Push-specific errors
+                this.logger.logError('STK Push-specific error occurred', { error });
+                throw error;
             }
 
+            this.logger.logCritical('Unexpected error occurred during STK Push', { error });
             throw new Error('Unexpected error occurred during STK Push');
         }
     }
@@ -137,6 +155,7 @@ export class MPesa {
      * @throws RegisterUrlError if the API returns an error response.
      */
     public async registerC2BUrl(payload: RegisterUrlPayloadType): Promise<RegisterUrlResponse> {
+        this.logger.logInfo('Initiating Register C2B Url', { payload })
         try {
             const response = await this.makeAuthorizedRequest<RegisterUrlResponseType>(
                 'POST',
@@ -147,6 +166,7 @@ export class MPesa {
             const registerResponse = RegisterUrlResponse.fromApiResponse(response);
 
             if (!registerResponse.isSuccess()) {
+                this.logger.logWarning('Register C2B Url failed', { response });
                 throw new RegisterUrlError(
                     'Register URL request failed',
                     response
@@ -156,13 +176,14 @@ export class MPesa {
             return registerResponse;
         } catch (error) {
             if (error instanceof RegisterUrlError) {
-                throw error; // Re-throw Register URL-specific errors
+                this.logger.logError('Regiter URL-specific error occured', { error })
+                throw error;
             }
 
+            this.logger.logCritical('Unexpected error occurred during Register URL', { error });
             throw new Error('Unexpected error occurred during Register URL');
         }
     }
-
 
     /**
      * Sends a B2C Pay Out request to the M-Pesa API.
@@ -171,6 +192,7 @@ export class MPesa {
      * @throws B2CError if the API returns an error response.
      */
     public async b2cPayment(payload: B2CPayloadType): Promise<B2CResponse> {
+        this.logger.logInfo('Initiating B2C Payment', { payload });
         try {
             const response = await this.makeAuthorizedRequest<B2CResponseType>(
                 'POST',
@@ -181,10 +203,11 @@ export class MPesa {
             const b2cResponse = B2CResponse.fromApiResponse(response);
 
             if (!b2cResponse.isSuccess()) {
+                this.logger.logWarning('B2C Payment failed', { response });
                 throw new B2CError(
                     'B2C Pay Out request failed',
                     {
-                        requestId: 'Unknown', // Replace with actual data if available
+                        requestId: '--', // To-Do: modify error response type (`requestID` is known)
                         errorCode: b2cResponse.ResponseCode,
                         errorMessage: b2cResponse.ResponseDescription,
                     }
@@ -194,11 +217,12 @@ export class MPesa {
             return b2cResponse;
         } catch (error) {
             if (error instanceof B2CError) {
-                throw error; // Re-throw B2C-specific errors
+                this.logger.logError('B2C Payment-related error occurred', { error });
+                throw error;
             }
 
+            this.logger.logCritical('Unexpected error occurred during B2C Payment', { error });
             throw new Error('Unexpected error occurred during B2C Pay Out');
         }
     }
-
 }
