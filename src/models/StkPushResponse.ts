@@ -19,6 +19,7 @@ export type StkPushResponseType = {
  * Represents the payload required for the STK Push request.
  */
 export type StkPushPayloadType = {
+    MerchantRequestID: string;
     BusinessShortCode: string;
     Password: string;
     Timestamp: string;
@@ -52,13 +53,13 @@ export class StkPushResponse {
      * @returns An instance of StkPushResponse.
      */
     static fromApiResponse(data: StkPushResponseType): StkPushResponse {
-        return new StkPushResponse(
-            data.MerchantRequestID,
-            data.CheckoutRequestID,
-            data.ResponseCode,
-            data.ResponseDescription,
-            data.CustomerMessage
-        );
+            return new StkPushResponse(
+                data.MerchantRequestID,
+                data.CheckoutRequestID,
+                data.ResponseCode,
+                data.ResponseDescription,
+                data.CustomerMessage
+            );
     }
 
     /**

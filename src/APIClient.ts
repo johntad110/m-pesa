@@ -16,11 +16,6 @@ export class APIClient {
             timeout: config.timeout || 5000,
         });
         this.retries = config.retries || 3;
-
-        this.axiosInstance.interceptors.response.use(
-            (response) => response,
-            (error: AxiosError) => this.handleError(error) // Centralized error handling
-        );
     }
 
     public async requestWithRetry<T>(

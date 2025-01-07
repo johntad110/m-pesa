@@ -2,7 +2,7 @@
  * Represents the response from the Register URL API.
  */
 export type RegisterUrlResponseType = {
-    responseCode: number;
+    responseCode: string;
     responseMessage: string;
     customerMessage: string;
     timestamp: string;
@@ -24,7 +24,7 @@ export type RegisterUrlPayloadType = {
  */
 export class RegisterUrlResponse {
     constructor(
-        public responseCode: number,
+        public responseCode: string,
         public responseMessage: string,
         public customerMessage: string,
         public timestamp: string
@@ -49,7 +49,7 @@ export class RegisterUrlResponse {
      * @returns True if the response was successful, false otherwise.
      */
     isSuccess(): boolean {
-        return this.responseCode === 200;
+        return this.responseCode === '200';
     }
 
     /**

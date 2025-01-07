@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { APIClient } from './APIClient';
 import { AuthenticationError, B2CError, RegisterUrlError, StkPushError } from './errors/MPesaError';
 import { AuthResponse, AuthResponseType } from './models/AuthResponse';
@@ -20,9 +19,10 @@ export class MPesa {
     private static instance: MPesa;
     private config: MpesaConfig;
     private apiClient: APIClient;
-    private accessToken: string | null = null;
-    private tokenExpiry: number | null = null;
     private logger: Logger;
+
+    public accessToken: string | null = null;
+    public tokenExpiry: number | null = null;
 
     private constructor(config: MpesaConfig) {
         this.config = config;
@@ -54,7 +54,7 @@ export class MPesa {
         return MPesa.instance;
     }
 
-    private async authenticate(): Promise<void> {
+    public async authenticate(): Promise<void> {
         if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
             return; // Token is still valid
         }
@@ -84,11 +84,13 @@ export class MPesa {
         } catch (error) {
             this.logger.logError('Authentication failed', { error });
 
-            if (error instanceof AxiosError && error.response) {
-                const { resultCode, resultDesc } = error.response.data;
+            if (typeof error === 'object' && error !== null && 'data' in error) {
+                const errorData = (error as { data: { resultCode: string; resultDesc: string } }).data;
+                const { resultCode, resultDesc } = errorData;
                 throw new AuthenticationError(resultDesc, resultCode);
             }
-            throw new Error('Network error or unexpected issue');
+            // Fallback for unexpected errors
+            throw new AuthenticationError('Unexpected error during authentication', 'UNKNOWN_ERROR');
         }
     }
 
@@ -144,7 +146,7 @@ export class MPesa {
             }
 
             this.logger.logCritical('Unexpected error occurred during STK Push', { error });
-            throw new Error('Unexpected error occurred during STK Push');
+            throw new Error(`Unexpected error occurred during STK Push ${error}`);
         }
     }
 

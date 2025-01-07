@@ -62,14 +62,14 @@ export class B2CError extends MPesaError {
  */
 export class RegisterUrlError extends MPesaError {
     public data: {
-        responseCode: number;
+        responseCode: string;
         responseMessage: string;
         customerMessage: string;
         timestamp: string;
     };
 
     constructor(message: string, data: {
-        responseCode: number;
+        responseCode: string;
         responseMessage: string;
         customerMessage: string;
         timestamp: string;
