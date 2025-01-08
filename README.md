@@ -3,7 +3,7 @@
 
 The M-Pesa Node.js SDK simplifies the integration of M-Pesa mobile payment services into your applications. It offers an intuitive API to manage core M-Pesa operations such as sending payments, receiving payments, checking account balances, and more...
 
-📘Learn more: [Documentation](), [Website]()
+📘Learn more: [Documentation](https://m-pesa-olive.vercel.app/docs), [Website](https://m-pesa-olive.vercel.app/)
 
 ---
 ## Contribution
