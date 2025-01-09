@@ -22,7 +22,7 @@ Before you start working on a new core feature it's better to open an issue firs
 1. Fork the repo
 2. clone your fork.
 3. install node.js (preferable latest LTS).
-4. run `cp -n ./docs/.env.example ./docs/.env` to create a `.env` file (if it doesn't exist)
+4. create a `.env` file (if it doesn't exist)
 5. run `npm i` in your terminal to install dependencies.
 6. create a branch.
 7. build the project using `npm build`
