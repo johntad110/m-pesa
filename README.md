@@ -1,4 +1,4 @@
-![M-Pesa Banner](/m-pesa_banner.png)
+![M-Pesa Banner](https://raw.githubusercontent.com/johntad110/m-pesa/refs/heads/main/m-pesa_banner.png)
 # M-Pesa SDK for Node.js
 
 The M-Pesa Node.js SDK simplifies the integration of M-Pesa mobile payment services into your applications. It offers an intuitive API to manage core M-Pesa operations such as sending payments, receiving payments, checking account balances, and more...
